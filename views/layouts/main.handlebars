@@ -2,11 +2,40 @@
 <html>
 <head>
 	<title>Mingkai'S Website</title>
+	<link href="http://cdn.bootcss.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet">
+	<link href="http://cdn.bootcss.com/font-awesome/4.2.0/css/font-awesome.min.css" rel="stylesheet">
+	{{#if showTest}}
+		<link rel="stylesheet" type="text/css" href="/vendor/mocha.css">
+	{{/if}}
 
+	<script type="text/javascript" src='//code.jquery.com/jquery-2.0.2.min.js'></script>
+
+    {{{_sections.head}}}
 </head>
 <body>
 
-<header><img src="/img/sky.jpg" alt="Mingkai'S sky picture"</header>
+{{!-- <header><img src="/img/sky.jpg" alt="Mingkai'S sky picture" width="1000" height="200"></header> --}}
+{{!此body将会被程序所使用替换掉每个文件页面部分}}
+<div class="container">
+<header><h1>Mingkai's Site</h1></header>
 {{{body}}}
+<footer>&copy;{{copyrightYear}}Mingkai's Site</footer>
+{{{_sections.jquery}}}
+
+{{!此部分作为判断如果为真则执行测试脚本}}
+{{#if showTest}}
+	<div id="mocha"></div>
+	<script type="text/javascript" src="/vendor/mocha.js"></script>
+	<script type="text/javascript" src="/vendor/chai.js"></script>
+	<script type="text/javascript">
+	mocha.ui('tdd');
+	var assert=chai.assert;
+	</script>
+	<script type="text/javascript" src="/qa/global-tests.js"></script>
+	{{#if pageTestScript}}
+		<script	src="{{pageTestScript}}"></script>
+	{{/if}}
+	<script type="text/javascript">mocha.run();</script>
+{{/if}}
 </body>
 </html>
