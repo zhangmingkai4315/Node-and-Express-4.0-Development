@@ -1,6 +1,7 @@
 #ignore packages installed by npm
 node_modules
 *~
+secure/*
 npm-debug.log
 .DS_Store
 

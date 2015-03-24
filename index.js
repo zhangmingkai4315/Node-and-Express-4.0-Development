@@ -2,6 +2,31 @@ var express=require('express');
 var app=express();
 var Fortune=require('./lib/fortune.js');
 var formidable=require('formidable');
+var credentials=require('./secure/credentials.js');
+var nodemailer=require('nodemailer');
+var mailTransport=nodemailer.createTransport({
+	service:'QQ',
+	auth:{
+		user:credentials.gmail.user,
+		pass:credentials.gmail.password
+	}
+}
+);
+
+
+//var secret="hello";
+
+//增加cookie支持
+
+app.use(require('cookie-parser')(credentials.cookieSecret));
+app.use(require('express-session')());
+
+
+app.use(function(req,res,next){
+	res.locals.flash=req.session.flash;
+	delete req.session.flash;
+	next();
+});
 
 //加载handlebars模板引擎
 var handlebars=require('express3-handlebars')
@@ -22,6 +47,9 @@ app.set('port',process.env.PORT||3000);
 
 //设置静态文件处理路由
 app.use(express.static(__dirname+'/public'));
+
+
+
 app.use(require('body-parser')());
 //定义一个参数，当变量请求中包含query "test=1"时 将showTest设置为1
 //改变header显示信息
@@ -69,6 +97,7 @@ app.use(function(req,res,next){
 
 
 app.get('/',function(req,res){
+
 	res.render('home');
 });
 
@@ -89,7 +118,9 @@ app.get('/data/nursery-rhyme',function(req,res){
 });
 
 app.get('/newsletter',function(req,res){
+	
 	res.render('newsletter',{csrf:'CSRF token goes here'});
+    
 });
 
 app.post('/process',function(req,res){
@@ -106,6 +137,48 @@ app.post('/process',function(req,res){
 	// console.log('Email'+req.body.email);
 	// //303不会缓存，若是使用301永久重定向则可能会导致直接重定向。
 	// res.redirect(303,'/thank-you');
+});
+var VALID_EMAIL_REGEX= /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i;
+app.post('/newsletter',function(req,res){
+	var name=req.body.name||'';
+	var email=req.body.email||'';
+	console.log(name+email);
+
+	// if(!email.match(VALID_EMAIL_REGEX)){
+	// 	//console.log(name);
+	// 	if(req.xhr) 
+	// 		return res.json({error:'Error:Invalid name email address'});
+	// 	//console.log(name);
+	// 	req.session.flash={
+	// 		type:'danger',
+	// 		intro:'validation error',
+	// 		message:'The email address you entered was not valid'
+	// 	};
+	// 	return res.redirect(303,'/newsletter1');
+	// }
+	// new NewsletterSignup({name:name,email:email}).save(function(err){
+	// 	if(err){
+	// 		if(req.xhr){
+	// 			return res.json({error:'Database error'});
+	// 		}
+	// 		req.session.flash={
+	// 		type:'danger',
+	// 		intro:'Database error',
+	// 		message:'The database was panic'
+	// 	    };
+	// 	return res.redirect(303,'/newsletter');
+	// 	}
+	// console.log(name);
+	    if(req.xhr) return res.json({success:true});
+	    req.session.flash={
+			type:'success',
+			intro:'Thank you',
+			message:'You have been signed up for the newsletter'
+		};
+        res.locals.flash=req.session.flash;
+		//console.log(req.session.flash);
+        return res.render('newsletter');
+	
 });
 
 
@@ -196,7 +269,24 @@ app.delete('/api/tour/:id',function(req,res){
 
 
 app.get('/about',function(req,res){
+	
+var mailOptions = {
+    from: 'Node.JS.info<353873605@qq.com>', // sender address
+    to: '353873605@qq.com', // list of receivers
+    subject: 'Hello ✔', // Subject line
+    text: 'Hello world ✔', // plaintext body
+    html: '<b>Hello world ✔</b>' // html body
+};
+
+mailTransport.sendMail(mailOptions, function(error, info){
+    if(error){
+        console.log(error);
+    }else{
+        console.log('Message sent: ' + info.response);
+    }
+});
 	res.render('About',{fortune:Fortune.getFortune(),pageTestScript:'/qa/tests-about.js'});
+
 });
 
 app.get('/tours/hood-river',function(req,res){

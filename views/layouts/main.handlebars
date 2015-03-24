@@ -7,9 +7,6 @@
 	{{#if showTest}}
 		<link rel="stylesheet" type="text/css" href="/vendor/mocha.css">
 	{{/if}}
-
-	<script type="text/javascript" src='//code.jquery.com/jquery-2.0.2.min.js'></script>
-
     {{{_sections.head}}}
 </head>
 <body>
@@ -18,8 +15,15 @@
 {{!此body将会被程序所使用替换掉每个文件页面部分}}
 <div class="container">
 <header><h1>Mingkai's Site</h1></header>
+
+
+
+
 {{{body}}}
-<footer>&copy;{{copyrightYear}}Mingkai's Site</footer>
+<footer>&copy;{{copyrightYear}}Mingkai's Site
+<script type="text/javascript" src='//code.jquery.com/jquery-2.0.2.min.js'></script>
+<script src="http://cdn.bootcss.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+</footer>
 {{{_sections.jquery}}}
 
 {{!此部分作为判断如果为真则执行测试脚本}}

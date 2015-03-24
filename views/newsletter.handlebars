@@ -1,6 +1,6 @@
 <div class="formContainer">
 <h2>Sign up for our newsletter to receive news and specials!</h2>
-<form class="form-horizontal newsletterForm" role="form" action="/process" method="post">
+<form class="form-horizontal newsletterForm" role="form" action="/newsletter" method="post">
 <input type="hidden" name="_csrf" value="{{csrf}}">
 <div class="form-group">
 <label for="fieldName" class="col-sm-2 control-laber">Name</label>
@@ -26,35 +26,43 @@
 
 </form>
 </div>
+{{#if flash}}
+<div class="alert alert-dismissible alert-{{flash.type}}">
+<button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+<strong>{{flash.intro}}</strong>{{{flash.message}}}
+</div>
+{{/if}}
+
+
 
 {{#section 'jquery'}}
 
-<script type="text/javascript">
-	$(document).ready(function(){
-		$('.newsletterForm').on('submit',function(evt){
-			evt.preventDefault();
-			var action=$(this).attr('action');
-			var $container=$(this).closest('.formContainer');
-			//alert($container);
-			$.ajax({
-				url:action,
-				type:'POST',
-				success:function(data){
-					if(data.sucess){
-						//alert("hello");
-						$container.html('<h2>Thanks!</h2>');
-					}else{
-						$container.html('<h2>Something wrong with data!</h2>');
-					}
+ <script type="text/javascript">
+// 	$(document).ready(function(){
+// 		$('.newsletterForm').on('submit',function(evt){
+// 			evt.preventDefault();
+// 			var action=$(this).attr('action');
+// 			var $container=$(this).closest('.formContainer');
+// 			//alert($container);
+// 			$.ajax({
+// 				url:action,
+// 				type:'POST',
+// 				success:function(data){
+// 					if(data.sucess){
+// 						//alert("hello");
+// 						$container.html('<h2>Thanks!</h2>');
+// 					}else{
+// 						$container.html('<h2>Something wrong with data!</h2>');
+// 					}
 
-				},
-				error:function(){
-					$container.html('Error,please try it later!');
-				}
-			});
+// 				},
+// 				error:function(){
+// 					$container.html('Error,please try it later!');
+// 				}
+// 			});
 
-		});
-	});
-</script>
+// 		});
+// 	});
+ </script>
 
 {{/section}}
