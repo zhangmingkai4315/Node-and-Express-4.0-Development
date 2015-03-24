@@ -3,18 +3,8 @@ var app=express();
 var Fortune=require('./lib/fortune.js');
 var formidable=require('formidable');
 var credentials=require('./secure/credentials.js');
-var nodemailer=require('nodemailer');
-var mailTransport=nodemailer.createTransport({
-	service:'QQ',
-	auth:{
-		user:credentials.gmail.user,
-		pass:credentials.gmail.password
-	}
-}
-);
 
-
-//var secret="hello";
+var emailService=require('./lib/email.js')(credentials);
 
 //增加cookie支持
 
@@ -269,22 +259,8 @@ app.delete('/api/tour/:id',function(req,res){
 
 
 app.get('/about',function(req,res){
-	
-var mailOptions = {
-    from: 'Node.JS.info<353873605@qq.com>', // sender address
-    to: '353873605@qq.com', // list of receivers
-    subject: 'Hello ✔', // Subject line
-    text: 'Hello world ✔', // plaintext body
-    html: '<b>Hello world ✔</b>' // html body
-};
 
-mailTransport.sendMail(mailOptions, function(error, info){
-    if(error){
-        console.log(error);
-    }else{
-        console.log('Message sent: ' + info.response);
-    }
-});
+	emailService.send('353873605@qq.com','Hood.River','Hello world');
 	res.render('About',{fortune:Fortune.getFortune(),pageTestScript:'/qa/tests-about.js'});
 
 });
@@ -311,6 +287,57 @@ app.post('/contest/vacation-photo/:year/:month',function(req,res){
 		res.redirect(303,'/thank-you');
 	});
 });
+
+
+app.get('/cart/checkout',function(req,res){
+	res.render('cart/register');
+});
+
+app.post('/cart/checkout',function(req,res,next){
+	
+	//if(!cart) next(new Error("Cart doesnot exists!"));
+	var name=req.body.name||'',email=req.body.email||'';
+	var cart={
+		number:0,
+		billing:{
+			name:null,
+			email:null
+		}
+	};
+	cart.number=Math.random().toString().replace(/^0\.0*/,'');
+	cart.billing={
+		name:name,
+		email:email
+	};
+
+	res.render('email/cart-thank-you',{
+		layout:null,cart:cart},function(err,html){
+			if(err) console.log("error in email: "+error);
+			var mailOptions = {
+			    from: 'Node.JS.info<353873605@qq.com>', // sender address
+			    to: '353873605@qq.com', // list of receivers
+			    subject: 'Booking infomation ✔', // Subject line
+			    text: 'Thank for booking travel sercice ✔', // plaintext body
+			    html: html,
+			    generateTextFromHtml:true // html body
+			};
+
+			mailTransport.sendMail(mailOptions, function(error, info){
+			    if(error){
+			        console.log(error);
+			    }else{
+			        console.log('Message sent: ' + info.response);
+			    }
+			});
+		}
+	);
+	res.render('cart-thanks-you',{cart:cart});
+});
+
+
+
+
+
 
 //500 page
 app.use(function(err,req,res,next){
