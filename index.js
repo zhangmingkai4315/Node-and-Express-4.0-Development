@@ -5,6 +5,23 @@ var formidable=require('formidable');
 var credentials=require('./secure/credentials.js');
 var http=require('http');
 var fs=require('fs');
+//增加数据库的链接
+var mongoose=require('mongoose');
+var opts={
+	server:{
+		socketOptions:{keepAlive:1}
+	}
+};
+
+var dataDir=__dirname+'/data';
+var vacationPhotoDir=dataDir+'/vacation-photo';
+fs.existsSync(dataDir)||fs.fs.mkdirSync(dataDir);
+fs.existsSync(vacationPhotoDir)||fs.fs.mkdirSync(vacationPhotoDir);
+
+function saveContestEntry(contestName,email,year,month,photoPath){
+	//Todo---
+}
+
 
 var emailService=require('./lib/email.js')(credentials);
 
@@ -15,16 +32,71 @@ switch(app.get('env')){
 	    var logFile=fs.createWriteStream(__dirname+'/log/requests.log', {flags:'a'});
 		var mogan=require('morgan');
 		app.use(mogan('combined',{stream:logFile}));
+        mongoose.connect('mongodb://127.0.0.1/development_webdata',opts);
 		
 		break;
 	case 'production':
 		app.use(require('express-logger')({
 			path:__dirname+'/log/requests.log'
 		}));
+		mongoose.connect('mongodb://127.0.0.1/production_webdata',opts);
 		break;
+	default:
+		throw new Error('Unknown execution environment:'+app.get('env'));
 }
 
 //增加cookie支持
+
+//初始化数据库数据：
+var Vacation=require('./models/vacation.js');
+Vacation.find(function(err,vacations){
+	if(vacations.length) return;
+	new Vacation({
+		name:'Hood River',
+		slug:'hood-river-day-trip',
+		category:'Day-trip',
+		sku:'HR199',
+		description:'Send a day sailing on the columbia and enjoying craft beers in Hood river',
+		priceInCents:9995,
+		tags:['day-trip','hood river','sailing','windsurfing'],
+		inSeason:true,
+		maximumGuests:16,
+		available:true,
+		packageSold:0,
+	}).save();
+    new Vacation({
+		name:'Red River',
+		slug:'hood-river-day-trip',
+		category:'Day-trip',
+		sku:'HR200',
+		description:'Send a day sailing on the columbia and enjoying craft beers in Hood river',
+		priceInCents:4000,
+		tags:['day-trip','red river'],
+		inSeason:true,
+		maximumGuests:16,
+		available:true,
+		packageSold:12,
+	}).save();
+    new Vacation({
+		name:'Black River',
+		slug:'hood-river-day-trip',
+		category:'Day-trip',
+		sku:'HR201',
+		description:'Send a day sailing on the columbia and enjoying craft beers in Hood river',
+		priceInCents:10000,
+		tags:['day-trip','black river'],
+		inSeason:false,
+		maximumGuests:20,
+		available:false,
+		packageSold:0,
+		notes:'The tour guide is recovering from a skiing accident',
+	}).save();
+});
+
+
+
+
+
 
 app.use(require('cookie-parser')(credentials.cookieSecret));
 app.use(require('express-session')());
@@ -158,6 +230,56 @@ app.post('/newsletter',function(req,res){
 });
 
 
+//关于mongo数据库中数据的展示：
+
+app.get('/vacations',function(req,res){
+	Vacation.find(function(err,vacations){
+		var context={
+			vacations:vacations.map(function(vacation){
+				return {
+					sku:vacation.sku,
+					name:vacation.name,
+					description:vacation.description,
+					price:vacation.getDisplayPrice(),
+					inSeason:vacation.inSeason,
+				};
+			})
+		};
+		res.render('vacations',context);
+	});
+});
+
+var VacationInseasonListener=require("./models/vacationInSeasonListener.js");
+app.get('/notify-me-when-in-season',function(req,res){
+	res.render('notify-me-when-in-season',{sku:req.query.sku});
+});
+
+app.post('/notify-me-when-in-season',function(req,res){
+	VacationInseasonListener.update(
+	{
+		email:req.body.email
+	},
+	{
+		$push:{skus:req.body.sku}
+	},
+	{
+		upsert:true
+	},function(err){
+		if(err){
+			console.error(err.stack);
+			req.session.flash={
+				type:'danger',intro:'Opps',message:'There are some error happen!'
+			};
+			return res.redirect(303,'/vacations');
+		}
+		req.session.flash={
+			type:'success',intro:'Thanks',message:'You will be notified when this vacation in season!'
+		};
+		return res.redirect(303,'/vacations');
+	}
+	)
+});
+
 
 
 //测试请求报文
@@ -267,10 +389,34 @@ app.get('/contest/vacation-photo',function(req,res){
 
 app.post('/contest/vacation-photo/:year/:month',function(req,res){
 	var form=new formidable.IncomingForm();
+	form.uploadDir='./tmp';
 	form.parse(req,function(err,fields,files){
 		if(err) return res.redirect(303,'/error');
-		console.log('received:'+fields+"\n received files:"+files);
-		res.redirect(303,'/thank-you');
+		if(err) {
+			res.session.flash={
+				type:'danger',
+				intro:'Oops!',
+				message:'There was an error processing your submission!'
+			}
+			return res.redirect(303,'/contest/vacation-photo');
+		}
+		var photo=files.photo;
+		var dir=vacationPhotoDir+'/'+Date.now();
+		var path=dir+'/'+photo.name;
+		
+		console.log(path);
+        console.log(photo.path);
+
+		fs.mkdirSync(dir);
+		fs.renameSync(photo.path,path);
+		saveContestEntry('vacation-photo',fields.email,req.params.year,req.params.month,path);
+		req.session.flash={
+			type:'success',
+			intro:'GoodLuck',
+			message:'You have been entered into the contest'
+		}
+		return res.redirect(303,'/contest/vacation-photo/entries');
+
 	});
 });
 

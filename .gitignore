@@ -4,4 +4,7 @@ node_modules
 secure/*
 npm-debug.log
 .DS_Store
+data/*
+tmp/*
+
 
