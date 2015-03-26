@@ -3,8 +3,26 @@ var app=express();
 var Fortune=require('./lib/fortune.js');
 var formidable=require('formidable');
 var credentials=require('./secure/credentials.js');
+var http=require('http');
+var fs=require('fs');
 
 var emailService=require('./lib/email.js')(credentials);
+
+//增加日志管理系统
+
+switch(app.get('env')){
+	case 'development':
+	    var logFile=fs.createWriteStream(__dirname+'/log/requests.log', {flags:'a'});
+		var mogan=require('morgan');
+		app.use(mogan('combined',{stream:logFile}));
+		
+		break;
+	case 'production':
+		app.use(require('express-logger')({
+			path:__dirname+'/log/requests.log'
+		}));
+		break;
+}
 
 //增加cookie支持
 
@@ -18,7 +36,7 @@ app.use(function(req,res,next){
 	next();
 });
 
-//加载handlebars模板引擎
+//加载handlebars模板引擎及section支持
 var handlebars=require('express3-handlebars')
 .create({defaultLayout:'main',helpers:{
 	section:function(name,options){
@@ -93,7 +111,7 @@ app.get('/',function(req,res){
 
 app.get('/testjquery',function(req,res){
 	res.render('jquerytest');
-})
+});			
 
 app.get('/nursery-rhyme',function(req,res){
 	res.render('jquerytest');
@@ -121,44 +139,12 @@ app.post('/process',function(req,res){
 	}else{
 		res.redirect(303,'/thank-you');
 	}
-	// console.log('Form:'+req.query.form);
-	// console.log('CSRF:'+req.body._csrf);
-	// console.log('Name:'+req.body.name);
-	// console.log('Email'+req.body.email);
-	// //303不会缓存，若是使用301永久重定向则可能会导致直接重定向。
-	// res.redirect(303,'/thank-you');
 });
-var VALID_EMAIL_REGEX= /\A[\w+\-.]+@[a-z\d\-.]+\.[a-z]+\z/i;
+var VALID_EMAIL_REGEX= /^[\w+\-.]+@[a-z\d\-.]+\.[a-z]+$/i;
 app.post('/newsletter',function(req,res){
 	var name=req.body.name||'';
 	var email=req.body.email||'';
 	console.log(name+email);
-
-	// if(!email.match(VALID_EMAIL_REGEX)){
-	// 	//console.log(name);
-	// 	if(req.xhr) 
-	// 		return res.json({error:'Error:Invalid name email address'});
-	// 	//console.log(name);
-	// 	req.session.flash={
-	// 		type:'danger',
-	// 		intro:'validation error',
-	// 		message:'The email address you entered was not valid'
-	// 	};
-	// 	return res.redirect(303,'/newsletter1');
-	// }
-	// new NewsletterSignup({name:name,email:email}).save(function(err){
-	// 	if(err){
-	// 		if(req.xhr){
-	// 			return res.json({error:'Database error'});
-	// 		}
-	// 		req.session.flash={
-	// 		type:'danger',
-	// 		intro:'Database error',
-	// 		message:'The database was panic'
-	// 	    };
-	// 	return res.redirect(303,'/newsletter');
-	// 	}
-	// console.log(name);
 	    if(req.xhr) return res.json({success:true});
 	    req.session.flash={
 			type:'success',
@@ -230,7 +216,7 @@ app.get('/api/tours',function(req,res){
 
 app.put('/api/tour/:id',function(req,res){
 	var p=tours.some(function(p){
-	return p.id=req.params.id;
+	return 	p.id=req.params.id;
 	});
 	if(p){
 		if(req.query.name)p.name=req.query.name;
@@ -334,6 +320,15 @@ app.post('/cart/checkout',function(req,res,next){
 	res.render('cart-thanks-you',{cart:cart});
 });
 
+app.get('/fail',function(req,res){
+   throw new Error('Nope!');
+});
+
+app.get('/epic-fail',function(req,res){
+	process.nextTick(function(){
+		throw new Error('Hello crash!');
+	});
+});
 
 
 
@@ -351,10 +346,27 @@ app.use(function(req,res){
 	res.send('404-Not Found');
 });
 
-app.listen(app.get('port'),function(){
-	console.log('Express started on http://localhost/:'+app.get('port')+"; press Ctrl+C to Stop!");
-});
 
+
+// app.listen(app.get('port'),function(){
+// 	console.log('Express started on http://localhost/:'+app.get('port')+"; press Ctrl+C to Stop!");
+// 	console.log('Running in Env:'+app.get("env"));
+
+// });
+
+function startServer(){
+	var server=http.createServer(app).listen(app.get('port'),function(){
+	console.log('Express started on http://localhost/:'+app.get('port')+"; press Ctrl+C to Stop!");
+	console.log('Running in Env:'+app.get("env"));
+	});
+}
+//当被其他脚本require时候，执行else 
+
+if(require.main===module){
+	startServer();
+}else{
+	module.exports=startServer;
+}
 
 
 
