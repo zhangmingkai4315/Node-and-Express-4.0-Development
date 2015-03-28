@@ -9,5 +9,3 @@ exports.about=function(req,res){
 		pageTestScript:'/qa/tests-about.js'
 	});
 };
-
-
