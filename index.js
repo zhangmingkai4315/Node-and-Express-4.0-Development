@@ -7,6 +7,8 @@ var http=require('http');
 var fs=require('fs');
 var vhost=require('vhost');
 
+var routes=require('./routes.js')(app);
+var emailService=require('./lib/email.js')(credentials);
 
 
 
@@ -28,7 +30,7 @@ function saveContestEntry(contestName,email,year,month,photoPath){
 }
 
 
-var emailService=require('./lib/email.js')(credentials);
+
 
 //增加日志管理系统和启动数据库连接
 
@@ -191,13 +193,42 @@ admin.get('/users',function(req,res){
 app.use(vhost('admin.*',admin));
 
 
+// //增加一个游戏：有一定概率会刷出好玩的东西
 
+// app.get('/',function(req,res,next){
+// var winNumber=Math.random();
+// console.log(winNumber);
+// if(winNumber<0.01){
+	
+// 	res.send('Bingo! You win a lottary!');
+// }
+// else{
+// 	next();
+// }
+// });
 
+//只有读取过首页的用户 才能看到秘密！
 
-app.get('/',function(req,res){
+// app.get('/secret',function(req,res,next){
+// 	if(!req.session.authorized)
+// 	res.send('Not-Authorized!');
+// 	else{
+// 		res.send('Secret!');
+// 	}
+	
+// });
 
-	res.render('home');
+//使用正则表达式 匹配路径
+
+app.get('/user(name)?',function(req,res){
+	res.send('Hello! user');
 });
+
+app.get('/staff/:city/:name',function(req,res){
+	res.send('City:'+req.params.city+" Name:"+req.params.name);
+})
+// 
+
 
 app.get('/testjquery',function(req,res){
 	res.render('jquerytest');
