@@ -5,6 +5,11 @@ var formidable=require('formidable');
 var credentials=require('./secure/credentials.js');
 var http=require('http');
 var fs=require('fs');
+var vhost=require('vhost');
+
+
+
+
 //增加数据库的链接
 var mongoose=require('mongoose');
 var opts={
@@ -25,7 +30,7 @@ function saveContestEntry(contestName,email,year,month,photoPath){
 
 var emailService=require('./lib/email.js')(credentials);
 
-//增加日志管理系统
+//增加日志管理系统和启动数据库连接
 
 switch(app.get('env')){
 	case 'development':
@@ -45,7 +50,7 @@ switch(app.get('env')){
 		throw new Error('Unknown execution environment:'+app.get('env'));
 }
 
-//增加cookie支持
+
 
 //初始化数据库数据：
 var Vacation=require('./models/vacation.js');
@@ -93,11 +98,6 @@ Vacation.find(function(err,vacations){
 	}).save();
 });
 
-
-
-
-
-
 app.use(require('cookie-parser')(credentials.cookieSecret));
 app.use(require('express-session')());
 
@@ -138,6 +138,8 @@ app.use(function(req,res,next){
 	res.setHeader('x-powered-by','Laravel');
 	next();
 });
+
+
 //对于天气的响应
 function getWeatherData(){
 	return {
@@ -173,6 +175,22 @@ app.use(function(req,res,next){
 //	console.log(res.locals.partials);
 	next();
 });
+
+
+
+//创建子域名的处理
+
+var admin=express.Router();
+admin.get('/',function(req,res){
+	res.render('admin/home');
+});
+admin.get('/users',function(req,res){
+	res.render('admin/users');
+});
+
+app.use(vhost('admin.*',admin));
+
+
 
 
 
@@ -475,6 +493,9 @@ app.get('/epic-fail',function(req,res){
 		throw new Error('Hello crash!');
 	});
 });
+
+
+
 
 
 
