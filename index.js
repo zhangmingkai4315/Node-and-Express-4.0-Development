@@ -31,7 +31,7 @@ function saveContestEntry(contestName,email,year,month,photoPath){
 
 
 
-
+		
 //增加日志管理系统和启动数据库连接
 
 switch(app.get('env')){
@@ -52,7 +52,9 @@ switch(app.get('env')){
 		throw new Error('Unknown execution environment:'+app.get('env'));
 }
 
+//增加MVC支持
 
+require('./controllers/customer.js').registerRoutes(app);
 
 //初始化数据库数据：
 var Vacation=require('./models/vacation.js');
@@ -112,13 +114,18 @@ app.use(function(req,res,next){
 
 //加载handlebars模板引擎及section支持
 var handlebars=require('express3-handlebars')
-.create({defaultLayout:'main',helpers:{
+.create({defaultLayout:'main',
+	helpers:{
 	section:function(name,options){
 		if(!this._sections)
 			this._sections={};
 		this._sections[name]=options.fn(this);
 		return null;
+	},
+	static:function(name){
+		return require('./lib/static.js').map(name);
 	}
+
 }});
 
 app.engine('handlebars',handlebars.engine);
