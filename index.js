@@ -178,7 +178,17 @@ app.use(function(req,res,next){
 	next();
 });
 
+var Attraction=require('./models/attraction.js');
 
+
+
+
+
+
+
+//增加跨源请求的
+
+app.use('/api',require('cors')());
 
 //创建子域名的处理
 
@@ -191,6 +201,70 @@ admin.get('/users',function(req,res){
 });
 
 app.use(vhost('admin.*',admin));
+
+
+
+
+var api=express.Router();
+
+api.get('/attractions',
+function(req,res){
+	Attraction.find({approved:true},
+		function(err,attractions){
+		if(err) 
+			return res.send(500,"Error Occurred:database error");
+		res.json(attractions.map(function(a){
+			return {
+				name:a.name,
+				id:a._id,
+				description:a.description,
+				location:a.location,
+			       };
+			}));
+	});
+});
+
+
+
+api.post('/attraction',function(req,res){
+	var a=new Attraction({
+		name:req.body.name,
+		description:req.body.description,
+		location:{
+			lat:req.body.lat,
+			lng:req.body.lng,
+		},
+		history:{
+			event:'Created',
+			email:req.body.email,
+			date:new Date(),
+		},
+		approved:false,
+	});
+	a.save(function(err,a){
+		if(err) 
+			res.send(500,'Error found in connnecting database!');
+		res.json({id:a._id});
+	});
+});
+
+
+
+api.get('/attraction/:id',function(req,res){
+	Attraction.findById(req.params.id,function(err,a){
+		if(err)  res.send(500,'Error Occurred:database');
+		res.json({
+			name:a.name,
+			description:a.description,
+			id:a._id,
+			location:a.location,
+		});
+	});
+});
+
+
+app.use(vhost('api.*',api));
+
 
 
 // //增加一个游戏：有一定概率会刷出好玩的东西
