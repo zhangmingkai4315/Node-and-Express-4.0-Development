@@ -9,7 +9,13 @@ var vhost=require('vhost');
 
 var routes=require('./routes.js')(app);
 var emailService=require('./lib/email.js')(credentials);
+//增加ssl支持,但是你的所有文件cdn加载也受限
 
+// var https=require('https');
+// var https_options={
+// 	key:fs.readFileSync(__dirname+'/ssl/mingkai.pem'),
+// 	cert:fs.readFileSync(__dirname+'/ssl/mingkai.crt'),
+// };
 
 
 //增加数据库的链接
@@ -634,6 +640,7 @@ app.use(function(req,res){
 // });
 
 function startServer(){
+	//var server=https.createServer(https_options,app).listen(app.get('port'),function(){
 	var server=http.createServer(app).listen(app.get('port'),function(){
 	console.log('Express started on http://localhost/:'+app.get('port')+"; press Ctrl+C to Stop!");
 	console.log('Running in Env:'+app.get("env"));

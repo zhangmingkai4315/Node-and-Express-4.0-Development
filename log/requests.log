@@ -219,3 +219,5 @@
 ::1 - - [29/Mar/2015:13:38:42 +0000] "GET /img/logg.jpg HTTP/1.1" 404 13 "http://localhost:3000/customer/5517f83634dec4830b2c62ed" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.104 Safari/537.36"
 ::1 - - [29/Mar/2015:13:40:34 +0000] "GET /customer/5517f83634dec4830b2c62ed HTTP/1.1" 200 677 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.104 Safari/537.36"
 ::1 - - [29/Mar/2015:13:40:35 +0000] "GET /img/logg.jpg HTTP/1.1" 404 13 "http://localhost:3000/customer/5517f83634dec4830b2c62ed" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.104 Safari/537.36"
+::1 - - [29/Mar/2015:14:38:32 +0000] "GET /img/logg.jpg HTTP/1.1" 404 13 "https://localhost:3000/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.104 Safari/537.36"
+::1 - - [29/Mar/2015:14:38:36 +0000] "GET /favicon.ico HTTP/1.1" 404 13 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/41.0.2272.104 Safari/537.36"
