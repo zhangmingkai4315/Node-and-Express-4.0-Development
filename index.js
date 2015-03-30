@@ -108,8 +108,21 @@ Vacation.find(function(err,vacations){
 	}).save();
 });
 
-app.use(require('cookie-parser')(credentials.cookieSecret));
+app.use(require('cookie-parser')(credentials.cookieSecret));	
 app.use(require('express-session')());
+
+//增加针对CSRF攻击的防护
+
+var csrf = require('csurf');
+// app.use(require('csurf')());
+// app.use(function(req,res,next){
+// 	res.locals._csrfToken=req.csrfToken();
+// 	next();
+// });
+
+
+
+
 
 
 app.use(function(req,res,next){
@@ -333,9 +346,12 @@ app.get('/data/nursery-rhyme',function(req,res){
 	});
 });
 
-app.get('/newsletter',function(req,res){
-	
-	res.render('newsletter',{csrf:'CSRF token goes here'});
+var csrfProtection = csrf({ cookie: true });
+
+
+app.get('/newsletter',csrfProtection,function(req,res){
+	console.log(req.csrfToken());
+	res.render('newsletter',{csrf:req.csrfToken()});
     
 });
 
@@ -349,7 +365,7 @@ app.post('/process',function(req,res){
 	}
 });
 var VALID_EMAIL_REGEX= /^[\w+\-.]+@[a-z\d\-.]+\.[a-z]+$/i;
-app.post('/newsletter',function(req,res){
+app.post('/newsletter',csrfProtection,function(req,res){
 	var name=req.body.name||'';
 	var email=req.body.email||'';
 	console.log(name+email);
@@ -360,6 +376,7 @@ app.post('/newsletter',function(req,res){
 			message:'You have been signed up for the newsletter'
 		};
         res.locals.flash=req.session.flash;
+
 		//console.log(req.session.flash);
         return res.render('newsletter');
 	
