@@ -7,6 +7,11 @@ var http=require('http');
 var fs=require('fs');
 var vhost=require('vhost');
 
+
+
+
+
+
 var routes=require('./routes.js')(app);
 var emailService=require('./lib/email.js')(credentials);
 //增加ssl支持,但是你的所有文件cdn加载也受限
@@ -16,6 +21,7 @@ var emailService=require('./lib/email.js')(credentials);
 // 	key:fs.readFileSync(__dirname+'/ssl/mingkai.pem'),
 // 	cert:fs.readFileSync(__dirname+'/ssl/mingkai.crt'),
 // };
+
 
 
 //增加数据库的链接
@@ -58,10 +64,13 @@ switch(app.get('env')){
 		throw new Error('Unknown execution environment:'+app.get('env'));
 }
 
+
 //增加MVC支持
 
 require('./controllers/customer.js').registerRoutes(app);
 
+//设置静态文件处理路由
+app.use(express.static('public'));
 //初始化数据库数据：
 var Vacation=require('./models/vacation.js');
 Vacation.find(function(err,vacations){
@@ -107,10 +116,46 @@ Vacation.find(function(err,vacations){
 		notes:'The tour guide is recovering from a skiing accident',
 	}).save();
 });
+var passport=require('passport');
+var LocalStrategy = require('passport-local').Strategy;
+var User=require('./models/user');
 
 app.use(require('cookie-parser')(credentials.cookieSecret));	
 app.use(require('express-session')());
+ app.use(passport.initialize());
+ app.use(passport.session());
 
+
+
+//认证支持
+
+
+
+passport.use(new LocalStrategy(
+  function(username, password, done) {
+    User.findOne({ username: username }, function (err, user) {
+     // console.log(user);
+      if (err) {
+        console.log(err.stack);
+      	return done(err); }
+      if (!user) {
+        return done(null, false, { message: 'Incorrect username.' });
+      }
+      if (user.password!=password) {
+        return done(null, false, { message: 'Incorrect password.' });
+      }
+  	passport.serializeUser(function(user, done) {
+ 	 done(null, user._id);
+	});
+	passport.deserializeUser(function(id, done) {
+  		 User.findById(id, function(err, user) {
+        done(err, user);
+      });
+    });
+      return done(null, user);
+    });
+  }
+));
 //增加针对CSRF攻击的防护
 
 var csrf = require('csurf');
@@ -153,8 +198,7 @@ app.set('view engine','handlebars');
 //设置端口
 app.set('port',process.env.PORT||3000);
 
-//设置静态文件处理路由
-app.use(express.static(__dirname+'/public'));
+
 
 
 
@@ -206,9 +250,17 @@ app.use(function(req,res,next){
 
 var Attraction=require('./models/attraction.js');
 
+//增加用户登录页面
+app.get('/login',function(req,res){
+	res.render('login');
+})
 
 
-
+app.post('/login',
+  passport.authenticate('local', { successRedirect: '/',
+                                   failureRedirect: '/login'
+   })
+);
 
 
 
@@ -253,6 +305,7 @@ function(req,res){
 
 
 api.post('/attraction',function(req,res){
+
 	var a=new Attraction({
 		name:req.body.name,
 		description:req.body.description,
@@ -321,12 +374,22 @@ app.use(vhost('api.*',api));
 //使用正则表达式 匹配路径
 
 app.get('/user(name)?',function(req,res){
-	res.send('Hello! user');
+	console.log(req.user);
+	if(req.user===undefined)
+		res.redirect(303,'/login');
+	else{
+		res.send('Hello! user')
+	};
 });
 
 app.get('/staff/:city/:name',function(req,res){
 	res.send('City:'+req.params.city+" Name:"+req.params.name);
 })
+app.get('/logout',function(req,res){
+	//req.user=undefined;
+	req.logout();
+	res.send("Logout");
+});
 // 
 
 
